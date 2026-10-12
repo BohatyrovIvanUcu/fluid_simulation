@@ -128,8 +128,13 @@ void FluidSimulator::step(Vec2 gravity, float dt, float angular_velocity) {
     // Обмеження максимального кроку часу для уникнення нестабільності
     if (dt > 0.033f) dt = 0.033f;
 
-    // 1. Інтеграція сил: гравітація, демпфування та кутове обертання кулона
+    // Зберігаємо початкові позиції для виведення швидкості за методом PBF (Macklin & Müller)
+    Vec2 old_pos[Config::MAX_PARTICLES];
+
+    // 1. Передбачення позицій (Predict positions під дією сил)
     for (uint16_t i = 0; i < particle_count_; ++i) {
+        old_pos[i] = particles_[i].pos;
+
         particles_[i].vel *= Config::DAMPING;
         particles_[i].vel += gravity * dt;
 
@@ -146,15 +151,25 @@ void FluidSimulator::step(Vec2 gravity, float dt, float angular_velocity) {
         particles_[i].pos += particles_[i].vel * dt;
     }
 
-    // 2. Взаємодія між частинками (4 ітерації розслаблення тиску для горизонтального вирівнювання)
+    // 2. Ітеративне розв'язання геометричних обмежень (Constraint Solving)
     for (int iter = 0; iter < 4; ++iter) {
         resolve_particle_collisions();
         apply_boundary_constraints();
     }
 
-    // 3. XSPH В'язкість: шарове тертя рідини (частинки пливуть як єдина суцільна хвиля води)
-    const float visc_radius = Config::PARTICLE_RADIUS * 2.5f;
+    // 3. Оновлення швидкості за канонічною формулою PBF: v = (pos_new - pos_old) / dt
+    // Це природно перетворює вертикальний удар у горизонтальне розтікання (сплеск),
+    // але автоматично затухає в нуль у стані спокою (без вічного двигуна)!
+    float inv_dt = 1.0f / dt;
+    for (uint16_t i = 0; i < particle_count_; ++i) {
+        particles_[i].vel = (particles_[i].pos - old_pos[i]) * inv_dt;
+        particles_[i].vel *= Config::DAMPING;
+    }
+
+    // 4. XSPH В'язкість за стандартом PBF (c <= 0.01..0.02)
+    const float visc_radius = Config::PARTICLE_RADIUS * 2.2f;
     const float visc_radius_sq = visc_radius * visc_radius;
+    const float c_visc = 0.015f; // Наукове каліброване значення в'язкості
     for (uint16_t i = 0; i < particle_count_; ++i) {
         for (uint16_t j = i + 1; j < particle_count_; ++j) {
             Vec2 delta = particles_[i].pos - particles_[j].pos;
@@ -162,15 +177,15 @@ void FluidSimulator::step(Vec2 gravity, float dt, float angular_velocity) {
             if (dist_sq < visc_radius_sq && dist_sq > 1e-6f) {
                 float dist = std::sqrt(dist_sq);
                 float q = 1.0f - (dist / visc_radius);
-                float visc = 0.10f * q;
                 Vec2 rel_vel = particles_[j].vel - particles_[i].vel;
-                particles_[i].vel += rel_vel * visc;
-                particles_[j].vel -= rel_vel * visc;
+                Vec2 visc_impulse = rel_vel * (c_visc * q);
+                particles_[i].vel += visc_impulse;
+                particles_[j].vel -= visc_impulse;
             }
         }
     }
 
-    // 4. Оновлення відображення на світлодіодах
+    // 5. Оновлення відображення на світлодіодах
     render_to_leds();
 }
 
@@ -188,19 +203,10 @@ void FluidSimulator::resolve_particle_collisions() {
                 float overlap = min_dist - dist;
                 Vec2 normal = delta / dist;
 
-                // Розштовхування для підтримки нестисливості рідини
+                // Нестисливість рідини: розсунення позицій
                 Vec2 push = normal * (0.5f * overlap * Config::REPULSION_STRENGTH);
                 particles_[i].pos += push;
                 particles_[j].pos -= push;
-
-                // Мінімальне згасання при зіткненні (0.07f) — енергія перетворюється на високі бризки й хвилі!
-                Vec2 rel_vel = particles_[i].vel - particles_[j].vel;
-                float normal_vel = rel_vel.dot(normal);
-                if (normal_vel < 0.0f) {
-                    Vec2 impulse = normal * (0.07f * normal_vel);
-                    particles_[i].vel -= impulse;
-                    particles_[j].vel += impulse;
-                }
             }
         }
     }
@@ -215,16 +221,6 @@ void FluidSimulator::apply_boundary_constraints() {
         if (dist > max_radius) {
             Vec2 normal = particles_[i].pos / (dist > 1e-6f ? dist : 1.0f);
             particles_[i].pos = normal * max_radius;
-
-            // Відбиття швидкості від стінки кулона
-            float normal_vel = particles_[i].vel.dot(normal);
-            if (normal_vel > 0.0f) {
-                Vec2 v_norm = normal * normal_vel;
-                Vec2 v_tang = particles_[i].vel - v_norm;
-
-                // Гладке ковзання вздовж стінок (0.995f) + пружний відскок хвилі (0.55f)
-                particles_[i].vel = (v_tang * 0.995f) - (v_norm * Config::WALL_BOUNCE);
-            }
         }
     }
 }

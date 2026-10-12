@@ -1,0 +1,27 @@
+# C++ Build artifacts
+build/
+*.o
+*.a
+*.so
+
+# STM32CubeIDE Build artifacts
+Debug/
+Release/
+*.elf
+*.bin
+*.hex
+*.map
+*.d
+*.su
+
+# Eclipse / IDE metadata
+.metadata/
+*.launch
+
+# LaTeX temporary artifacts
+*.aux
+*.log
+*.out
+*.synctex.gz
+*.toc
+
