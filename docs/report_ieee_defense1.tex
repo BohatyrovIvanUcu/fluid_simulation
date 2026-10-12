@@ -163,6 +163,7 @@ The engine was implemented in pure embedded C++17 with zero heap usage. Empirica
 \begin{table}[htbp]
 \caption{Simulation Performance across Fluid Fill Levels}
 \begin{center}
+\resizebox{\columnwidth}{!}{%
 \begin{tabular}{cccccc}
 \toprule
 \textbf{Fill Level} & \textbf{Particles ($N$)} & \textbf{Active LEDs} & \textbf{Step Latency} & \textbf{PC FPS} & \textbf{MCU Load$^*$} \\
@@ -174,7 +175,8 @@ The engine was implemented in pure embedded C++17 with zero heap usage. Empirica
 100\% (Full) & 140 & 240 & 0.1099\,ms & 9,099   & $\approx 17\%$ \\
 \bottomrule
 \multicolumn{6}{l}{$^*$Estimated CPU load on ARM Cortex-M4 @ 84\,MHz at 40\,FPS target.}
-\end{tabular}
+\end{tabular}%
+}
 \label{tab:benchmarks}
 \end{center}
 \end{table}
