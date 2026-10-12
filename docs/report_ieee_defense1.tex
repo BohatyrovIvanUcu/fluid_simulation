@@ -24,23 +24,23 @@
 Lviv, Ukraine \\
 bohatyrov.pn@ucu.edu.ua}
 \and
-\IEEEauthorblockN{Ostap [Last Name]}
+\IEEEauthorblockN{Ostap Sukhomlyn}
 \IEEEauthorblockA{\textit{Faculty of Applied Sciences} \\
 \textit{Ukrainian Catholic University}\\
 Lviv, Ukraine \\
-[email]@ucu.edu.ua}
+sukhomlyn.pn@ucu.edu.ua}
 \and
-\IEEEauthorblockN{Artem [Last Name]}
+\IEEEauthorblockN{Artem Serhiichuk}
 \IEEEauthorblockA{\textit{Faculty of Applied Sciences} \\
 \textit{Ukrainian Catholic University}\\
 Lviv, Ukraine \\
-[email]@ucu.edu.ua}
+serhiichuk.pn@ucu.edu.ua}
 \and
-\IEEEauthorblockN{Andriy [Last Name]}
+\IEEEauthorblockN{Andriy Antoniuk}
 \IEEEauthorblockA{\textit{Faculty of Applied Sciences} \\
 \textit{Ukrainian Catholic University}\\
 Lviv, Ukraine \\
-[email]@ucu.edu.ua}
+a.antoniuk.pn@ucu.edu.ua}
 }
 
 \maketitle
@@ -59,12 +59,12 @@ Embedded systems, fluid simulation, Position-Based Fluids (PBF), Charlieplexing,
 \section{Introduction and Project Vision}
 \noindent\fbox{%
     \parbox{0.96\linewidth}{%
-        \textbf{\color{blue}[PLACEHOLDER -- ВІДПОВІДАЛЬНИЙ: Артем]}\\[3pt]
-        \textit{Задачі для Артема: Заповнити 2--3 абзаци за структурою презентації:}
+        \textbf{\color{blue}[PLACEHOLDER -- RESPONSIBLE: Artem]}\\[3pt]
+        \textit{Instructions for Artem: Write 2--3 paragraphs according to presentation structure:}
         \begin{itemize}
-            \item Загальне бачення продукту: Автономний розумний кулон ($\varnothing 45$\,мм, товщина 10--12\,мм) з динамічною симуляцією рідини на круглій світлодіодній матриці, що реагує на рухи, ходьбу та нахили користувача.
-            \item Вимоги до пристрою: Цільовий FPS (40--60\,FPS), час автономної роботи ($\ge 5$ годин від Li-Po 300\,mAh), зарядка через USB Type-C.
-            \item Контекст проєкту: Переймання досвіду минулорічної команди УКУ та вихід на новий інженерний рівень (перехід від девборди до власної розведеної плати та автономного девайса).
+            \item \textbf{Product Vision}: A wearable smart pendant ($\varnothing 45$\,mm, 10--12\,mm thickness) with dynamic fluid simulation on a circular LED matrix responding to user motion, steps, and tilting.
+            \item \textbf{System Requirements}: Target frame rate (40--60\,FPS), autonomous runtime ($\ge 5$ hours on a 300\,mAh Li-Po battery), rechargeable via USB Type-C.
+            \item \textbf{Engineering Context}: Building upon the experience of the previous UCU team, advancing from development boards to a custom circular PCB and a standalone enclosed device.
         \end{itemize}
     }%
 }
@@ -75,13 +75,13 @@ Embedded systems, fluid simulation, Position-Based Fluids (PBF), Charlieplexing,
 \section{Hardware Architecture and System Requirements}
 \noindent\fbox{%
     \parbox{0.96\linewidth}{%
-        \textbf{\color{blue}[PLACEHOLDER -- ВІДПОВІДАЛЬНИЙ: Остап]}\\[3pt]
-        \textit{Задачі для Остапа (блок девборди та мікроконтролера):}
+        \textbf{\color{blue}[PLACEHOLDER -- RESPONSIBLE: Ostap]}\\[3pt]
+        \textit{Instructions for Ostap (Developer board and Microcontroller section):}
         \begin{itemize}
-            \item \textbf{Мікроконтролер}: STM32 Cortex-M (демонстрація на девборді, перехід на STM32F401CCU6 BlackPill), тактова частота, пам'ять (Flash/RAM), прошивка через SWD / ST-Link V2.
-            \item \textbf{Світлодіодна матриця}: Принцип Чарліплексингу (Charlieplexing). Формула $N(N-1) = 16 \times 15 = 240$ діодів на 16 GPIO пінах завдяки 3 станам пінів (HIGH, LOW, Hi-Z).
-            \item \textbf{Сенсор}: Акселерометр IMU (MPU-6050 або LSM6DS3) по шині I2C, опитування вектора гравітації на частоті 100\,Гц.
-            \item \textbf{Енергоспоживання}: Розрахунок струмів: STM32 ($\approx 18$\,мА) + Чарліплексинг матриця ($\approx 30$\,мА) + IMU ($\approx 1.5$\,мА) $\implies I_{\text{total}} \approx 50$\,мА (автономність $\approx 5.8$ год від 300\,mAh).
+            \item \textbf{Microcontroller}: Selection of STM32 Cortex-M (prototyping on developer board, transitioning to STM32F401CCU6 BlackPill), core frequency, Flash/RAM footprint, SWD programming via ST-Link V2.
+            \item \textbf{LED Matrix}: Charlieplexing topology. Explain the formula $N(N-1) = 16 \times 15 = 240$ LEDs using 16 GPIO pins via tri-state logic (HIGH, LOW, Hi-Z).
+            \item \textbf{Sensor}: I2C IMU accelerometer (MPU-6050 or LSM6DS3) sampling gravity vector at 100\,Hz.
+            \item \textbf{Power Consumption}: Current budget: STM32 ($\approx 18$\,mA) + Charlieplexing matrix ($\approx 30$\,mA) + IMU ($\approx 1.5$\,mA) $\implies I_{\text{total}} \approx 50$\,mA ($\approx 5.8$ hours on 300\,mAh battery).
         \end{itemize}
     }%
 }
@@ -99,7 +99,7 @@ Simulating convincing fluid motion on a resource-constrained microcontroller (AR
     \begin{equation}
         \nabla^2 p = \frac{\rho_0}{\Delta t} \nabla \cdot \mathbf{v}^*
     \end{equation}
-    \textit{Rejection Rationale}: Requires solving large linear sparse systems (Jacobi/Gauss-Seidel iterations) and storing multiple 2D scalar/vector fields ($u, v, p$). On a $18 \times 18$ grid, this demands excessive memory bandwidth and floating-point operations beyond the real-time budget of microcontrollers.
+    \textit{Rejection Rationale}: Requires solving large linear sparse systems (Jacobi/Gauss-Seidel iterations) and storing multiple 2D scalar/vector fields ($u, v, p$). On an $18 \times 18$ grid, this demands excessive memory bandwidth and floating-point operations beyond the real-time budget of microcontrollers.
 
     \item \textbf{Cellular Automata (CA / Falling Sand)}: Discretizes fluid into binary occupancy states evaluated with local neighborhood transition rules.
     \textit{Rejection Rationale}: Fails to model true continuous momentum conservation, centripetal vortices, and wave sloshing. Under motion, the fluid behaves like dry sand or powder rather than a cohesive liquid.
@@ -191,14 +191,14 @@ The engine was implemented in pure embedded C++17 with zero heap usage. Empirica
 \section{Bill of Materials and Component Procurement}
 \noindent\fbox{%
     \parbox{0.96\linewidth}{%
-        \textbf{\color{blue}[PLACEHOLDER -- ВІДПОВІДАЛЬНИЙ: Андрій]}\\[3pt]
-        \textit{Задачі для Андрія (Шопінг-ліст / Buy-list із цінами та посиланнями):}
+        \textbf{\color{blue}[PLACEHOLDER -- RESPONSIBLE: Andriy]}\\[3pt]
+        \textit{Instructions for Andriy (Shopping list / Buy-list with prices and links):}
         \begin{itemize}
-            \item \textbf{Мікроконтролер}: STM32F401CCU6 (BlackPill для макетування $\to$ голий чіп під розведення плати). \textit{Обґрунтування: ядро Cortex-M4 з апаратним FPU, достатньо GPIO для Чарліплексингу.}
-            \item \textbf{Сенсор}: IMU MPU-6050 (або LSM6DS3). \textit{Обґрунтування: надійне I2C вимірювання гравітації та поштовхів, низький струм споживання.}
-            \item \textbf{Світлодіоди}: 300$\times$ SMD 0603 Blue LED (з запасом). \textit{Обґрунтування: висока яскравість, компактні розміри для матриці $\varnothing 45$\,мм.}
-            \item \textbf{Живлення}: Li-Po акумулятор 3.7V 300\,mAh (502030), плата заряду TP4056 USB-C, LDO стабілізатор 3.3V ME6211C33.
-            \item \textbf{Програматор}: USB-донгл ST-Link V2 для SWD прошивки та відладки.
+            \item \textbf{Microcontroller}: STM32F401CCU6 (BlackPill module for prototyping $\to$ bare QFN package for custom PCB). \textit{Justification: Cortex-M4 with hardware FPU and sufficient GPIO count for Charlieplexing.}
+            \item \textbf{Sensors}: MPU-6050 6-axis IMU. \textit{Justification: Reliable I2C acceleration sensing with low standby current.}
+            \item \textbf{LEDs}: 300$\times$ SMD 0603 Blue LEDs. \textit{Justification: High luminous intensity, compact footprint for $\varnothing 45$\,mm matrix.}
+            \item \textbf{Power Subsystem}: Li-Po 3.7V 300\,mAh battery (model 502030), TP4056 USB Type-C charger module, ME6211C33 3.3V LDO regulator.
+            \item \textbf{Programmer}: ST-Link V2 USB dongle for SWD programming and debugging.
         \end{itemize}
     }%
 }
@@ -209,29 +209,29 @@ The engine was implemented in pure embedded C++17 with zero heap usage. Empirica
 \section{Enclosure Design and Ergonomics}
 \noindent\fbox{%
     \parbox{0.96\linewidth}{%
-        \textbf{\color{blue}[PLACEHOLDER -- ВІДПОВІДАЛЬНИЙ: Артем / Андрій]}\\[3pt]
-        \textit{Задачі з 3D-моделювання корпусу (Fusion 360 / Onshape):}
+        \textbf{\color{blue}[PLACEHOLDER -- RESPONSIBLE: Artem / Andriy]}\\[3pt]
+        \textit{Instructions for 3D CAD Enclosure Modeling (Fusion 360 / Onshape):}
         \begin{itemize}
-            \item Габарити круглого кулона ($\varnothing 45$\,мм, товщина 10--12\,мм) з розсіювачем для плавного злиття світла від діодів.
-            \item Конструктив: відсік під акумулятор, фіксація плати, отвір під Type-C роз'єм та вушко для підвішування на шию.
-            \item Технологія виготовлення: фотополімерний 3D-друк (SLA смола) або FDM.
+            \item Circular enclosure dimensions ($\varnothing 45$\,mm, 10--12\,mm thickness) with integrated diffuser lens for smooth LED blending.
+            \item Mechanical features: internal battery pocket, PCB mounting snap-fits, USB Type-C cutout, and necklace lanyard loop.
+            \item Manufacturing plan: SLA photopolymer resin 3D printing or high-resolution FDM.
         \end{itemize}
     }%
 }
 
 %% =========================================================================
-%% SECTION VI: DEVELOPMENT ROADMAP & RISK ANALYSIS [PLACEHOLDER - TEAM]
+%% SECTION VI: DEVELOPMENT ROADMAP & RISK ANALYSIS [PLACEHOLDER - OSTAP & ARTEM]
 %% =========================================================================
 \section{Development Roadmap and Risk Analysis}
 \noindent\fbox{%
     \parbox{0.96\linewidth}{%
-        \textbf{\color{blue}[PLACEHOLDER -- ВІДПОВІДАЛЬНІ: Остап \& Артем]}\\[3pt]
-        \textit{Задачі: План до 2-го захисту та оцінка ризиків:}
+        \textbf{\color{blue}[PLACEHOLDER -- RESPONSIBLE: Ostap \& Artem]}\\[3pt]
+        \textit{Instructions: Milestones toward Defense 2 and risk mitigation:}
         \begin{itemize}
-            \item \textbf{Етап 1 (Жовтень)}: Успішний 1-й захист; верифікація концепту на девборді дівчат (Blinky + Charlieplexing).
-            \item \textbf{Етап 2 (Кінець жовтня)}: Затвердження та подача фінального списку деталей (Buy-list).
-            \item \textbf{Етап 3 (Листопад -- 2-й захист)}: Розведення власної круглої плати в KiCad, замовлення на JLCPCB, прошивка через ST-Link/SWD.
-            \item \textbf{Головні ризики}: Довга доставка компонентів (мінімізуємо швидким замовленням), складність ручної пайки 240 SMD діодів (мінімізуємо фабричним монтажем PCBA або паяльною пастою з трафаретом).
+            \item \textbf{Milestone 1 (Mid-October)}: Defense 1; Proof-of-Concept verification on developer board; Blinky and Charlieplexing demo.
+            \item \textbf{Milestone 2 (End of October)}: Finalize Bill of Materials order submission before procurement deadline.
+            \item \textbf{Milestone 3 (November -- Defense 2)}: KiCad custom circular PCB design, JLCPCB PCBA fabrication, flashing bare chip via ST-Link/SWD.
+            \item \textbf{Key Risks}: Component delivery delays (mitigated by purchasing local stock for prototyping), SMD soldering difficulty (mitigated by factory PCBA assembly or solder stencil).
         \end{itemize}
     }%
 }
@@ -247,4 +247,3 @@ The engine was implemented in pure embedded C++17 with zero heap usage. Empirica
 \end{thebibliography}
 
 \end{document}
-
