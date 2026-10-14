@@ -50,16 +50,20 @@ void FluidSimulator::set_fill_level(float ratio) {
 
     particle_count_ = 0;
 
-    // Калібровані кількості частинок для точних відсотків матриці:
-    // 20% -> 48 LED, 40% -> 96 LED, 60% -> 144 LED, 80% -> 192 LED, 100% -> 240 LED
-    uint16_t target_count = 140;
-    if (ratio <= 0.25f) target_count = 12;
-    else if (ratio <= 0.45f) target_count = 27;
-    else if (ratio <= 0.65f) target_count = 46;
-    else if (ratio <= 0.85f) target_count = 76;
-    else target_count = 140;
+    // Збалансовані рівні заповненості кулона:
+    // Рівень 1 (20%): 8 частинок   (~35 LED)
+    // Рівень 2 (40%): 18 частинок  (~75 LED)
+    // Рівень 3 (60%): 28 частинок  (~115 LED, номінал - половина)
+    // Рівень 4 (80%): 40 частинок  (~160 LED, залишає гарний простір для хвиль)
+    // Рівень 5 (100%): 52 частинки (~200 LED, повний кулон без стискання)
+    uint16_t target_count = 52;
+    if (ratio <= 0.25f) target_count = 8;
+    else if (ratio <= 0.45f) target_count = 18;
+    else if (ratio <= 0.65f) target_count = 28;
+    else if (ratio <= 0.85f) target_count = 40;
+    else target_count = 52;
 
-    const float spacing = 0.128f;
+    const float spacing = 0.135f;
     for (float y = 0.95f; y >= -0.95f && particle_count_ < target_count; y -= spacing) {
         for (float x = -0.95f; x <= 0.95f && particle_count_ < target_count; x += spacing) {
             if (x * x + y * y <= 0.95f) {

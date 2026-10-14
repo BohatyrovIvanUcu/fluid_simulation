@@ -269,24 +269,19 @@ void run_benchmark() {
 }
 
 void print_led_matrix(const fluid::FluidSimulator& sim, int frame_idx, const std::string& action, bool auto_rotate, float rotate_speed) {
+    (void)action;
+    (void)auto_rotate;
+    (void)rotate_speed;
     // Очищення екрана та повернення курсору у верхній лівий кут
     std::cout << "\033[H\033[J";
 
     std::cout << "\033[1;36m=== РОЗУМНИЙ КУЛОН: СИМУЛЯЦІЯ ВОДИ (C++ Core) ===\033[0m\n";
     std::cout << "Світлодіодів: \033[1;33m" << sim.get_led_count() 
               << "\033[0m | Частинок води: \033[1;32m" << sim.get_particle_count() 
-              << "\033[0m | Кадр: " << frame_idx << "\n";
-    
-    std::cout << "Стан: ";
-    if (auto_rotate) {
-        std::cout << "\033[1;35mАВТО-ОБЕРТАННЯ ↻ [швидкість: " << static_cast<int>(rotate_speed * 500) << "%]\033[0m";
-    } else {
-        std::cout << "\033[1;32m" << action << "\033[0m | Гравітація Землі: \033[1;36mТЯГНЕ НА ДНО ↓\033[0m";
-    }
-    std::cout << "\n";
+              << "\033[0m | Кадр: " << frame_idx << "\n\n";
 
     std::cout << "\033[1;37mКерування (динаміка хвиль та інерція):\033[0m\n";
-    std::cout << "  • Крутнути кулон (вихор!): \033[1;33m[R]\033[0m за стрілкою ↻ | \033[1;33m[E]\033[0m проти ↺ | \033[1;33m[Space]\033[0m авто\n";
+    std::cout << "  • Крутнути кулон:          \033[1;33m[R]\033[0m ↺ | \033[1;33m[E]\033[0m ↻ | \033[1;33m[Space]\033[0m авто\n";
     std::cout << "  • Швидкість обертання:     \033[1;33m[F]\033[0m швидше (+) | \033[1;33m[V]\033[0m повільніше (-)\n";
     std::cout << "  • Хвилі/Поштовх:           \033[1;33m[← / A]\033[0m вліво | \033[1;33m[→ / D]\033[0m вправо | \033[1;33m[↑ / W]\033[0m сплеск | \033[1;33m[↓ / S]\033[0m осідання\n";
     std::cout << "  • Рівень води:             \033[1;33m[1, 2, 3, 4, 5]\033[0m (20%..100%) | \033[1;33m[+ / -]\033[0m частинки\n";
@@ -321,7 +316,6 @@ void print_led_matrix(const fluid::FluidSimulator& sim, int frame_idx, const std
         }
         std::cout << "\n";
     }
-    std::cout << "\n\033[2m(Вода завжди хлюпається і стікає назад на дно під силою тяжіння)\033[0m\n";
     std::cout.flush();
 }
 
@@ -397,19 +391,19 @@ void run_interactive_demo() {
             sim.adjust_particle_count(-8);
         } else if (act == KEY_LEVEL_1) {
             sim.set_fill_level(0.20f);
-            action = "Рівень: 20% води (48 LED)";
+            action = "Рівень 1: ~15% води (8 частинок)";
         } else if (act == KEY_LEVEL_2) {
             sim.set_fill_level(0.40f);
-            action = "Рівень: 40% води (96 LED)";
+            action = "Рівень 2: ~30% води (18 частинок)";
         } else if (act == KEY_LEVEL_3) {
             sim.set_fill_level(0.60f);
-            action = "Рівень: 60% води (144 LED)";
+            action = "Рівень 3: ~50% води (28 частинок)";
         } else if (act == KEY_LEVEL_4) {
             sim.set_fill_level(0.80f);
-            action = "Рівень: 80% води (192 LED)";
+            action = "Рівень 4: ~65% води (40 частинок)";
         } else if (act == KEY_LEVEL_5) {
             sim.set_fill_level(1.00f);
-            action = "Рівень: 100% повний (240 LED)";
+            action = "Рівень 5: ~80% води (52 частинки)";
         } else if (act == KEY_RESET) {
             auto_rotate = false;
             dynamic_acc = fluid::Vec2(0.0f, 0.0f);
