@@ -218,7 +218,7 @@ The engine was implemented in pure embedded C++17 with zero dynamic heap allocat
 
 \textbf{PCB Architecture.} A custom 2-layer circular PCB ($\varnothing 42$\,mm) is routed in KiCad. The front layer hosts exclusively the 240-LED matrix, while the reverse side accommodates the STM32F401 microcontroller, LSM6DS3 IMU, power regulation circuitry, and 4-pad SWD programming interface. To account for fabrication and assembly yield, five boards are ordered to secure at least two fully operational units.
 
-\textbf{Enclosure and Optical Diffuser.} The enclosure is modeled in Fusion 360 as a two-piece circular case ($\varnothing 45$\,mm outer diameter, 11.5\,mm depth) containing internal snap-fits, a Type-C cutout, and a 30$\times$20$\times$5\,mm battery pocket. Prototypes will be 3D-printed in high-resolution resin. A semi-translucent frosted acrylic diffuser front cover blends discrete LED points into a continuous liquid meniscus.
+\textbf{Enclosure and Optical Diffuser.} The enclosure is modeled in Fusion 360 as a two-piece circular case ($\varnothing 45$\,mm outer diameter, 11.5\,mm depth) containing internal snap-fits, a Type-C cutout, and a 30$\times$20$\times$5\,mm battery pocket. Prototypes will be 3D-printed. A semi-translucent frosted acrylic diffuser front cover blends discrete LED points into a continuous liquid meniscus.
 
 %% =========================================================================
 %% SECTION VI: BILL OF MATERIALS AND PROCUREMENT
@@ -258,13 +258,13 @@ External Programmer    & ST-Link V2 USB Dongle (SWD)        & 1     & \$2.70 \\
 %% =========================================================================
 %% SECTION VII: PROJECT ROADMAP
 %% =========================================================================
-\section{Project Roadmap to Defense 2}
+\section{Project Roadmap}
 The milestones toward the final hardware implementation are structured as follows:
 \begin{enumerate}
-    \item \emph{Milestone 1 (Defense 1, Mid-October):} Embedded C++ simulation core verified on desktop; Charlieplexing multiplexing scheme mathematically validated; BOM, power budget, and prototyping hardware established (Completed).
-    \item \emph{Milestone 2 (End of October):} Complete schematic capture and circular PCB layout in KiCad; submit PCB and stencil fabrication orders to JLCPCB.
-    \item \emph{Milestone 3 (November -- Defense 2):} Assemble circular PCBs via solder paste and hot-air reflow; flash firmware via SWD; integrate LSM6DS3 IMU readings with the simulation loop over I2C.
-    \item \emph{Milestone 4 (December -- Final Defense):} Complete enclosure assembly with optical diffuser and battery; conduct thermal, power, and operational validation.
+    \item \emph{Milestone 1 (Defense 1):} Embedded C++ simulation core verified on desktop; Charlieplexing multiplexing scheme mathematically validated; BOM, power budget, and prototyping hardware established (Completed).
+    \item \emph{Milestone 2:} Complete schematic capture and circular PCB layout in KiCad; submit PCB and stencil fabrication orders to JLCPCB.
+    \item \emph{Milestone 3 (Defense 2):} Assemble circular PCBs via solder paste and hot-air reflow; flash firmware via SWD; integrate LSM6DS3 IMU readings with the simulation loop over I2C.
+    \item \emph{Milestone 4 (Final Defense):} Complete enclosure assembly with optical diffuser and battery; conduct thermal, power, and operational validation.
 \end{enumerate}
 
 %% =========================================================================
