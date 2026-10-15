@@ -11,6 +11,14 @@
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 
+\makeatletter
+\newcommand{\linebreakand}{%
+  \end{@IEEEauthorhalign}%
+  \hfill\mbox{}\par
+  \mbox{}\hfill\begin{@IEEEauthorhalign}%
+}
+\makeatother
+
 \begin{document}
 
 \title{Autonomous Interactive Fluid Simulation Pendant Based on STM32}
@@ -32,7 +40,7 @@ sukhomlyn.pn@ucu.edu.ua}
 \textit{Ukrainian Catholic University}\\
 Lviv, Ukraine \\
 serhiichuk.pn@ucu.edu.ua}
-\and
+\linebreakand
 \IEEEauthorblockN{Andriy Antoniuk}
 \IEEEauthorblockA{\textit{Faculty of Applied Sciences} \\
 \textit{Ukrainian Catholic University}\\
