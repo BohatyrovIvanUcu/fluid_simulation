@@ -5,7 +5,7 @@ An autonomous, wearable smart pendant ($\varnothing 45$\,mm, 11.5\,mm depth) tha
 
 ---
 
-## 👥 Team & Roles
+## Team & Roles
 * **Ivan Bohatyrov** (`bohatyrov.pn@ucu.edu.ua`) — Mathematical Formulation, C++ Physics Engine & Simulation Benchmarks
 * **Ostap Sukhomlyn** (`sukhomlyn.pn@ucu.edu.ua`) — STM32 Architecture, Charlieplexing Matrix Driver & Timers
 * **Artem Serhiichuk** (`serhiichuk.pn@ucu.edu.ua`) — System Architecture, CAD Enclosure Design (Fusion 360) & Requirements
@@ -14,7 +14,7 @@ An autonomous, wearable smart pendant ($\varnothing 45$\,mm, 11.5\,mm depth) tha
 
 ---
 
-## ⚡ Key Engineering Specifications
+## Key Engineering Specifications
 * **Display Matrix**: 240 discrete SMD 0603 Blue LEDs arranged in a circular grid ($\varnothing 42$\,mm active PCB).
 * **Display Driving**: **Charlieplexing** ($N(N-1) = 16 \times 15 = 240$ LEDs using only 16 MCU GPIO pins).
 * **Target Refresh Rate**: 40–60 FPS.
@@ -27,7 +27,7 @@ An autonomous, wearable smart pendant ($\varnothing 45$\,mm, 11.5\,mm depth) tha
 
 ---
 
-## 🌊 Physics Engine Architecture (Position-Based Fluids)
+## Physics Engine Architecture (Position-Based Fluids)
 To operate within strict embedded constraints ($\le 64$\,KB RAM, low CPU budget), fluid behavior is simulated as discrete 2D particles using distance constraints:
 1. **Force Integration & Prediction**: Velocity updated with IMU gravity vector $\mathbf{g}$ and damping $\alpha = 0.988$.
 2. **Incompressibility Constraint**: Neighboring particles closer than $2r$ are pushed apart along their contact normal.
@@ -50,7 +50,7 @@ To operate within strict embedded constraints ($\le 64$\,KB RAM, low CPU budget)
 
 ---
 
-## 🚀 Quickstart & Interactive CLI
+## Quickstart & Interactive CLI
 
 ### Build the Project:
 ```bash
@@ -81,6 +81,6 @@ make benchmark
 
 ---
 
-## 📄 Documentation & Reports
+## Documentation & Reports
 * **IEEE Defense 1 Report LaTeX**: [`docs/report_ieee_defense1.tex`](docs/report_ieee_defense1.tex)
 * **Overleaf Project**: Maintained collaboratively for Defense 1 evaluation.
