@@ -10,7 +10,8 @@ An autonomous, wearable smart pendant ($\varnothing 45$\,mm, 11.5\,mm depth) tha
 * **Ostap Sukhomlyn** (`sukhomlyn.pn@ucu.edu.ua`) — STM32 Architecture, Charlieplexing Matrix Driver & Timers
 * **Artem Serhiichuk** (`serhiichuk.pn@ucu.edu.ua`) — System Architecture, CAD Enclosure Design (Fusion 360) & Requirements
 * **Andriy Antoniuk** (`a.antoniuk.pn@ucu.edu.ua`) — Power Subsystem (Battery/LDO/Charger), Bill of Materials & Procurement
-* **Mentor**: Oleksiy (Tech Lead, Sigma Software)
+* **Daryna Shevchuk** (`shevchuk.d@ucu.edu.ua`) — Hardware Testing & Quality Assurance
+* **Mentor**: Oleksiy Hoyev (Software Engineer, Sigma Software)
 
 ---
 
