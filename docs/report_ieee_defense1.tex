@@ -83,7 +83,7 @@ The previous year's student team developed an initial proof-of-concept; however,
 
 \textbf{Microcontroller Strategy.} We adopt a two-stage development methodology:
 \begin{enumerate}
-    \item \emph{Prototyping \& Bring-Up (Current Stage):} We utilize a NUCLEO-L432KC board (ARM Cortex-M4 @ 80\,MHz, 64\,KB SRAM) inherited from the previous team alongside a BlackPill module for initial sensor communication, timer profiling, and desktop verification.
+    \item \emph{Prototyping \& Bring-Up Platform:} We adopt a NUCLEO-L432KC board (ARM Cortex-M4 @ 80\,MHz, 64\,KB SRAM) inherited from the previous team as our benchtop bring-up platform for IMU interface verification and timer profiling prior to custom PCB fabrication.
     \item \emph{Custom PCB Integration (Final Stage):} The standalone STM32F401CCU6 in a compact UFQFPN48 package ($7 \times 7$\,mm) is selected. It features an ARM Cortex-M4 core at 84\,MHz with a hardware single-precision Floating-Point Unit (FPU), 256\,KB Flash, 64\,KB SRAM, and 36 available GPIOs. Firmware is flashed and debugged over a 4-pin Serial Wire Debug (SWD) interface via an external ST-Link V2 dongle.
 \end{enumerate}
 
@@ -256,7 +256,7 @@ External Programmer    & ST-Link V2 USB Dongle (SWD)        & 1     & \$2.70 \\
 \section{Project Roadmap to Defense 2}
 The milestones toward the final hardware implementation are structured as follows:
 \begin{enumerate}
-    \item \emph{Milestone 1 (Defense 1, Mid-October):} C++ simulation core verified on desktop; Charlieplexing logic tested on development board; BOM and power budget completed (Completed).
+    \item \emph{Milestone 1 (Defense 1, Mid-October):} Embedded C++ simulation core verified on desktop; Charlieplexing multiplexing scheme mathematically validated; BOM, power budget, and prototyping hardware established (Completed).
     \item \emph{Milestone 2 (End of October):} Complete schematic capture and circular PCB layout in KiCad; submit PCB and stencil fabrication orders to JLCPCB.
     \item \emph{Milestone 3 (November -- Defense 2):} Assemble circular PCBs via solder paste and hot-air reflow; flash firmware via SWD; integrate LSM6DS3 IMU readings with the simulation loop over I2C.
     \item \emph{Milestone 4 (December -- Final Defense):} Complete enclosure assembly with optical diffuser and battery; conduct thermal, power, and operational validation.
