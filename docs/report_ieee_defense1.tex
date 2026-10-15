@@ -13,7 +13,7 @@
 
 \begin{document}
 
-\title{Interactive Fluid Simulation Pendant: Embedded Architecture and Physics Core\\
+\title{Autonomous Interactive Fluid Simulation Pendant Based on STM32\\
 {\footnotesize \textsuperscript{*}UCU Robotics and Embedded Systems -- Defense 1 Project Report (October 2026)}
 }
 
@@ -45,69 +45,63 @@ a.antoniuk.pn@ucu.edu.ua}
 \maketitle
 
 \begin{abstract}
-This report presents the system architecture, hardware specification, and physics engine for an autonomous interactive fluid simulation pendant. The device features a circular matrix of 240 SMD LEDs ($\varnothing 42$\,mm active PCB) driven by an STM32 Cortex-M microcontroller that displays real-time fluid dynamics responding to physical tilting and acceleration measured by an ultra-low-power 6-axis IMU sensor. For Defense 1, we implemented and validated a lightweight 2D particle physics engine in pure C++17 with distance constraints. The engine requires only 5.95\,KB of static RAM with zero dynamic allocations ($O(1)$ heap) and executes in 0.010\,ms per step ($>100,000$\,FPS on PC, $\approx 1\%$ estimated CPU load on an 84\,MHz ARM Cortex-M4 at 40\,FPS). Furthermore, drawing from direct consultation and hardware handover from the previous year's team (NUCLEO-L432KC), we establish the Charlieplexing display topology (240 discrete SMD 0603 LEDs via 16 GPIOs), reject power-hungry addressable LEDs, calculate a verified power budget ($\approx 6.2$ hours on a 300\,mAh Li-Po battery), specify the complete Bill of Materials, and lay out our development roadmap toward custom PCB manufacturing for Defense 2.
+This report presents the first-stage development of an autonomous wearable pendant that simulates interactive fluid dynamics on a custom circular matrix of 240 LEDs based on an STM32 microcontroller. The device measures physical tilt and acceleration via an ultra-low-power 6-axis IMU and visualizes sloshing fluid waves in real time. We present the project aims, system architecture, component selection, and a fully validated C++17 Position-Based Fluids (PBF) simulation core. The engine requires only 5.95\,KB of static RAM with zero dynamic heap allocations ($O(1)$ memory) and executes in 0.010\,ms per step ($>100,000$\,FPS on PC, $\approx 1\%$ estimated CPU load on an 84\,MHz ARM Cortex-M4 at 40\,FPS). Furthermore, drawing from direct consultation and hardware handover from the previous year's team, we establish a Charlieplexing display topology (16 GPIOs driving 240 discrete 0603 LEDs), an empirical power budget ($\approx 6.2$ hours on a 300\,mAh Li-Po cell), a complete Bill of Materials, and a manufacturing roadmap toward custom PCB fabrication for Defense 2.
 \end{abstract}
 
 \begin{IEEEkeywords}
-Embedded systems, real-time simulation, particle physics, Charlieplexing, STM32, IMU, LSM6DS3, wearable device.
+wearable robotics, fluid simulation, STM32, Charlieplexing, IMU sensor, Position-Based Dynamics, embedded systems
 \end{IEEEkeywords}
 
 %% =========================================================================
-%% SECTION I: INTRODUCTION & PROJECT VISION
+%% SECTION I: INTRODUCTION
 %% =========================================================================
-\section{Introduction and Requirements}
+\section{Introduction}
+Interactive wearable accessories and fidget devices offer unique visual feedback, yet existing electronic pendants are predominantly limited to static patterns or pre-recorded animations. Creating real-time physical liquid sloshing inside an ultra-compact wearable enclosure presents significant embedded engineering challenges across computational fluid dynamics, pin-constrained display multiplexing, and power optimization.
 
-\subsection{Project Vision}
-The goal of this project is to design and build an autonomous, wearable electronic pendant ($\varnothing 45$\,mm, 11.5\,mm thickness) that simulates liquid sloshing inside a sealed circular chamber. An onboard inertial measurement unit (IMU) continuously measures the direction of gravity and user movement. The liquid is rendered onto a custom circular matrix of 240 blue LEDs, creating a responsive physical simulation of fluid behavior.
+The previous year's student team developed an initial proof-of-concept; however, their architecture relied on a modular stack with a developer board mounted externally via wiring harnesses, resulting in a bulky enclosure ($\approx 8\text{--}10$\,cm) unsuitable for practical daily wear. The primary objective of this project is full miniaturization into an autonomous, self-contained circular pendant ($\varnothing 45$\,mm, 11.5\,mm depth) hosting an integrated custom PCB, an onboard microcontroller, and a rechargeable battery subsystem.
 
-\subsection{System Requirements}
-For a practical wearable prototype, we defined the following engineering requirements:
+%% =========================================================================
+%% SECTION II: AIM AND OBJECTIVES
+%% =========================================================================
+\section{Aim and Objectives}
+\textbf{Aim.} To design and build an autonomous, compact wearable electronic pendant that simulates realistic fluid sloshing dynamics on a circular 240-LED matrix responding to user motion.
+
+\textbf{Objectives.}
 \begin{itemize}
-    \item \textbf{Display \& Responsiveness}: Target refresh rate of 40--60\,FPS to ensure smooth visual motion without perceptible lag.
-    \item \textbf{Dimensions}: Outer enclosure diameter $\le 45$\,mm, internal PCB diameter $\le 42$\,mm, total depth $\le 12$\,mm, suitable for wearing as a neck pendant.
-    \item \textbf{Battery Life}: Autonomous runtime of $\ge 5$ hours using a compact 300\,mAh Lithium-Polymer (Li-Po) battery rechargeable via USB Type-C.
-    \item \textbf{Microcontroller Constraints}: All physics simulation, IMU filtering, and display multiplexing must execute within a low-power microcontroller with $\le 64$\,KB of internal SRAM.
+    \item Implement and benchmark an embedded C++ physics engine capable of real-time sloshing simulation within $\le 64$\,KB of microcontroller SRAM;
+    \item Drive a high-density circular array of 240 blue LEDs using a Charlieplexing topology constrained to 16 GPIO lines;
+    \item Read physical acceleration and tilt vectors at $\ge 100$\,Hz using an ultra-low-power 6-axis IMU via I2C;
+    \item Design an internal two-sided circular PCB ($\varnothing 42$\,mm) and a lightweight enclosure ($\varnothing 45$\,mm, 11.5\,mm depth) with an optical diffuser;
+    \item Ensure $\ge 5$ hours of autonomous battery life from a 300\,mAh Li-Po cell rechargeable via USB Type-C;
+    \item Validate the complete physical pipeline on desktop and developer hardware before custom PCB fabrication.
 \end{itemize}
 
-\subsection{Past Team Consultation and Practical Insights}
-To mitigate hardware and fabrication risks, our team consulted with the previous year's project team (Daryna) and received their hardware development kit, including a NUCLEO-L432KC board and spare components. Key insights incorporated into our engineering plan include:
+%% =========================================================================
+%% SECTION III: SYSTEM ARCHITECTURE & CHOSEN TECHNOLOGIES
+%% =========================================================================
+\section{System Architecture and Chosen Technologies}
+
+\textbf{Microcontroller Strategy.} We adopt a two-stage development methodology:
 \begin{enumerate}
-    \item \textbf{Reflow Soldering over Manual Iron}: Soldering 240 small SMD LEDs with a conventional soldering iron introduces high risk of solder bridges and thermal damage. Assembly will be carried out using a hot-air rework station (or hot plate) with solder paste and a laser-cut stainless steel stencil.
-    \item \textbf{Redundant Backup PCBs}: Fabrication yields for dense two-layer LED matrices can vary; we are ordering five fabricated boards from JLCPCB to maintain at least two fully assembled working units.
-    \item \textbf{EDA Workflow}: Utilizing KiCad for parametric circular footprint placement and trace routing.
+    \item \emph{Prototyping \& Bring-Up (Current Stage):} We utilize a NUCLEO-L432KC board (ARM Cortex-M4 @ 80\,MHz, 64\,KB SRAM) inherited from the previous team alongside a BlackPill module for initial sensor communication, timer profiling, and desktop verification.
+    \item \emph{Custom PCB Integration (Final Stage):} The standalone STM32F401CCU6 in a compact UFQFPN48 package ($7 \times 7$\,mm) is selected. It features an ARM Cortex-M4 core at 84\,MHz with a hardware single-precision Floating-Point Unit (FPU), 256\,KB Flash, 64\,KB SRAM, and 36 available GPIOs. Firmware is flashed and debugged over a 4-pin Serial Wire Debug (SWD) interface via an external ST-Link V2 dongle.
 \end{enumerate}
 
-%% =========================================================================
-%% SECTION II: HARDWARE ARCHITECTURE & SYSTEM DESIGN
-%% =========================================================================
-\section{Hardware Architecture}
-
-\subsection{Microcontroller Strategy (Prototyping vs. Final PCB)}
-We adopt a clear two-stage microcontroller strategy:
-\begin{itemize}
-    \item \textbf{Stage 1 (Laboratory Bring-up \& Prototyping)}: We utilize the \textbf{NUCLEO-L432KC} board (ARM Cortex-M4 @ 80\,MHz, 64\,KB SRAM) obtained from the previous team, alongside a generic STM32F401 BlackPill. This enables immediate testing of basic I2C sensor communications, timer-driven GPIO multiplexing, and algorithm profiling.
-    \item \textbf{Stage 2 (Final Custom Circular PCB)}: We selected the standalone \textbf{STM32F401CCU6} (or pin-compatible STM32F411CEU6) in a compact UFQFPN48 package (ARM Cortex-M4 @ 84\,MHz, hardware single-precision FPU, 256\,KB Flash, 64\,KB SRAM). It provides 36 available GPIO lines, abundant for our Charlieplexing matrix, while fitting neatly inside the $\varnothing 42$\,mm board geometry. Firmware is programmed via SWD using an ST-Link V2 dongle.
-\end{itemize}
-
-\subsection{Display Architecture: Charlieplexing vs. Addressable LEDs}
-Driving 240 LEDs individually without specialized controller ICs is achieved via \textbf{Charlieplexing}, which leverages the tri-state capability of microcontroller I/O pins (\texttt{HIGH}, \texttt{LOW}, and High-Impedance \texttt{Hi-Z}). With $N$ GPIO pins, the maximum addressable LED count is:
+\textbf{Display Architecture: Charlieplexing.} Driving 240 discrete LEDs directly would exceed both microcontroller pin counts and routing channel space. We implement Charlieplexing, leveraging tri-state logic (\texttt{HIGH}, \texttt{LOW}, and High-Impedance \texttt{Hi-Z}). With $N$ GPIO lines, the maximum addressable LED count is:
 \begin{equation}
     L_{\text{max}} = N(N - 1)
 \end{equation}
-Allocating $N = 16$ GPIO pins yields:
+Allocating $N = 16$ pins yields exactly:
 \begin{equation}
     16 \times (16 - 1) = 240 \text{ LEDs}
 \end{equation}
+Pairs of LEDs are connected in anti-parallel configurations across pin pairs. At any instant, one pin drives \texttt{HIGH}, one drives \texttt{LOW}, and the remaining 14 lines are set to \texttt{Hi-Z}. Scanning at $>100$\,Hz provides flicker-free persistence of vision.
 
-\textbf{Rejection of Addressable LEDs}: We evaluated smart addressable RGB LEDs (such as WS2812B-2020), but rejected them due to severe power penalties: each integrated driver chip consumes $\approx 1$\,mA quiescent current even when completely dark, totaling $\approx 240$\,mA idle draw for 240 LEDs. This would exhaust a 300\,mAh battery in under 50 minutes without even illuminating the matrix. Furthermore, addressable LEDs cannot use Charlieplexing pin reduction. 
+\emph{Rejection of Addressable LEDs}: Smart RGB LEDs (e.g., WS2812B-2020) were formally evaluated and rejected: each integrated IC consumes $\approx 1$\,mA quiescent current even when unlit, totaling $\approx 240$\,mA idle draw for 240 pixels. This would deplete a 300\,mAh battery in under 50 minutes without active illumination. In contrast, discrete SMD 0603 LEDs in a Charlieplexed scanning matrix draw an average of only $\approx 25$\,mA. Current-limiting resistors on each of the 16 driving lines safeguard the microcontroller I/O ports.
 
-Instead, discrete \textbf{SMD 0603 Blue LEDs} were selected. Because Charlieplexing rapidly scans through rows/pairs, only a small fraction of LEDs conduct current at any microsecond, keeping average matrix consumption at a modest $\approx 25$\,mA. Dedicated SMD current-limiting resistors are placed on each of the 16 driving lines to protect MCU GPIO pins.
+\textbf{Motion Sensing.} A 6-axis LSM6DS3TR-C IMU communicates over I2C at 400\,kHz. With an operating current of only 0.9\,mA, it samples linear acceleration and gravity vectors at 104\,Hz to orient the simulation frame.
 
-\subsection{Sensor Subsystem}
-Orientation and motion are captured via an \textbf{LSM6DS3} 6-axis ultra-low-power IMU over I2C at 400\,kHz. With an active current draw of only 0.9\,mA, it reduces power consumption significantly compared to older sensors. The accelerometer samples the 2D gravity vector at 104\,Hz, driving the physics simulation frame.
-
-\subsection{Power Budget and Battery Life}
-Table~\ref{tab:power} summarizes the continuous current draw at 3.3\,V.
+\textbf{Power Budget.} Table~\ref{tab:power} summarizes the continuous current draw at 3.3\,V.
 \begin{table}[htbp]
 \caption{Estimated System Power Consumption}
 \label{tab:power}
@@ -117,10 +111,10 @@ Table~\ref{tab:power} summarizes the continuous current draw at 3.3\,V.
 \toprule
 \textbf{Subsystem} & \textbf{Operating Mode} & \textbf{Current (mA)} \\
 \midrule
-STM32F401 MCU             & 84\,MHz active, FPU on         & 15.00\,mA \\
+STM32F401 MCU             & 84\,MHz active, FPU enabled    & 15.00\,mA \\
 LED Matrix (0603 Blue)    & Charlieplexed dynamic scanning & 25.00\,mA \\
 LSM6DS3 IMU               & Accelerometer active (104\,Hz) &  0.90\,mA \\
-LDO Regulator (3.3V)      & XC6206 quiescent loss          &  0.05\,mA \\
+LDO Regulator (3.3V)      & XC6206P332MR quiescent loss    &  0.05\,mA \\
 TP4056 Protection Circuit & Standby discharge leakage      &  0.005\,mA \\
 \midrule
 \textbf{Total Draw}       &                                & \textbf{40.95\,mA} \\
@@ -129,66 +123,61 @@ TP4056 Protection Circuit & Standby discharge leakage      &  0.005\,mA \\
 }
 \end{table}
 
-With an average current of $\approx 41$\,mA, a single 3.7\,V, 300\,mAh Li-Po battery delivers:
+Under a steady-state draw of $\approx 41$\,mA, a single 3.7\,V 300\,mAh Li-Po battery provides:
 \begin{equation}
     t_{\text{run}} \approx \frac{300\,\text{mAh} \times 0.85}{41\,\text{mA}} \approx 6.22 \text{ hours}
 \end{equation}
-comfortably exceeding the 5-hour target.
+satisfying the 5-hour continuous operational requirement.
 
 %% =========================================================================
-%% SECTION III: FLUID SIMULATION PHYSICS CORE
+%% SECTION IV: WORK DONE SO FAR (PHYSICS ENGINE & BENCHMARKS)
 %% =========================================================================
-\section{Fluid Simulation Engine}
+\section{Work Done So Far: Fluid Physics Core}
 
-\subsection{Algorithm Selection Rationale}
-Simulating liquid on an embedded microcontroller requires balancing visual realism with strict memory and computation limits. We analyzed three common approaches:
+\subsection{Algorithm Selection}
+To simulate realistic liquid on an embedded MCU with only 64\,KB SRAM, three computational methodologies were evaluated:
 \begin{itemize}
-    \item \textbf{Grid-Based Navier-Stokes}: Requires large 2D arrays for velocity and pressure, along with iterative linear solvers. This exceeds our 64\,KB SRAM limit and is computationally prohibitive.
-    \item \textbf{Cellular Automata (Falling Sand)}: Very low CPU usage, but particles move only by discrete falling rules without true velocity or momentum. It looks like dry sand rather than flowing water.
-    \item \textbf{Particle Simulation with Distance Constraints (Our Choice)}: Liquid is modeled as a small set of discrete 2D particles with geometric non-penetration constraints. It provides continuous momentum, splashes, and wave sloshing while requiring under 6\,KB of RAM and running in microseconds.
+    \item \emph{Eulerian Grid Navier-Stokes}: Requires large 2D velocity and pressure matrices alongside iterative linear Poisson solvers, exceeding internal SRAM and execution budgets.
+    \item \emph{Cellular Automata (Falling Sand)}: Extremely lightweight, but models discrete granular displacement without momentum, vortices, or surface sloshing waves.
+    \item \emph{Position-Based Fluids (Our Choice)}: Represents fluid as $N$ discrete particles governed by geometric distance constraints. It guarantees unconditional numerical stability, zero heap allocations, and microsecond-scale execution.
 \end{itemize}
 
-\subsection{Simulation Equations}
-The fluid is represented by $N$ particles inside a circle of normalized radius $R = 1.0$. Each particle has position $\mathbf{x}_i \in \mathbb{R}^2$ and velocity $\mathbf{v}_i \in \mathbb{R}^2$. At each time step $\Delta t$, the engine executes four simple steps:
+\subsection{Governing Equations}
+The fluid volume is discretized into $N$ particles with positions $\mathbf{x}_i \in \mathbb{R}^2$ and velocities $\mathbf{v}_i \in \mathbb{R}^2$ inside a normalized circular boundary of radius $R = 1.0$. Each discrete simulation step $\Delta t$ proceeds through four stages:
 
-\subsubsection{1. Motion Prediction}
-Particles are updated under velocity and external acceleration $\mathbf{g}$ measured by the IMU:
+1) \emph{Position Prediction:} Particles advance under current velocity and external gravity acceleration $\mathbf{g}$ measured by the IMU:
 \begin{align}
     \mathbf{v}_i^* &= \alpha \cdot \mathbf{v}_i + \mathbf{g} \Delta t \\
     \mathbf{x}_i^* &= \mathbf{x}_i + \mathbf{v}_i^* \Delta t
 \end{align}
-where $\alpha = 0.988$ is a damping factor modeling slight air resistance.
+where $\alpha = 0.988$ provides natural atmospheric velocity damping.
 
-\subsubsection{2. Incompressibility (Particle Spacing)}
-To keep liquid volume constant, particles must not overlap. If the distance between two particles $d_{ij} = |\mathbf{x}_i^* - \mathbf{x}_j^*|$ is less than their diameter $2r$, they are pushed apart along their contact normal $\mathbf{n}_{ij}$:
+2) \emph{Incompressibility Constraints:} Liquid volume conservation is enforced through pairwise non-penetration constraints. When distance $d_{ij} = |\mathbf{x}_i^* - \mathbf{x}_j^*|$ falls below particle diameter $2r$, particles are separated along contact normal $\mathbf{n}_{ij}$:
 \begin{equation}
     \Delta \mathbf{x}_i = \frac{1}{2} k \, (2r - d_{ij}) \, \mathbf{n}_{ij}, \quad \Delta \mathbf{x}_j = -\Delta \mathbf{x}_i
 \end{equation}
-where $k = 0.92$ is the collision stiffness.
+where $k = 0.92$ denotes constraint relaxation stiffness.
 
-\subsubsection{3. Circular Boundary Constraint}
-Particles are confined inside the circular chamber:
+3) \emph{Boundary Clamping:} Particles are confined within the circular cavity:
 \begin{equation}
     \mathbf{x}_i^* = R_{\text{max}} \frac{\mathbf{x}_i^*}{|\mathbf{x}_i^*|}, \quad \text{if } |\mathbf{x}_i^*| > R_{\text{max}}
 \end{equation}
 where $R_{\text{max}} = 0.97$.
 
-\subsubsection{4. Velocity Update from Displacement}
-Velocity is updated directly from the displacement:
+4) \emph{Velocity Update from Displacement:} Rather than integrating stiff pressure forces, velocity is derived directly from actual positional displacement:
 \begin{equation}
     \mathbf{v}_i = \frac{\mathbf{x}_i^* - \mathbf{x}_i}{\Delta t}
 \end{equation}
-When particles hit the bottom of the container, the collision push forces them laterally. Because velocity is derived from this lateral movement, the impact naturally produces horizontal splash waves without artificial forces.
+When particles collide with the curved boundary, non-penetration forces displace them laterally. Because velocity is updated from this displacement, downward impacts naturally produce horizontal splash waves and surface sloshing.
 
-\subsubsection{5. Neighbor Viscosity Filter (XSPH)}
-To ensure particles flow together as a cohesive liquid instead of loose dust, a velocity smoothing filter is applied:
+5) \emph{Viscosity Filtering (XSPH):} An artificial viscosity filter smooths neighboring velocity vectors, maintaining cohesive droplet flow:
 \begin{equation}
     \Delta \mathbf{v}_i = c \sum_{j} (\mathbf{v}_j - \mathbf{v}_i) \left(1 - \frac{d_{ij}}{h}\right)
 \end{equation}
-where $c = 0.015$ is the viscosity coefficient and $h$ is the neighbor radius.
+where $c = 0.015$ is the viscosity coefficient and $h$ is the smoothing radius.
 
-\subsection{Performance and Benchmark Results}
-The engine was implemented in pure embedded C++17 with zero heap usage ($O(1)$ memory). Table~\ref{tab:benchmarks} presents benchmark results measured across different fluid fill levels.
+\subsection{Empirical Verification and Benchmarks}
+The engine was implemented in pure embedded C++17 with zero dynamic heap allocations ($O(1)$ static memory). Benchmark validation across fill levels is reported in Table~\ref{tab:benchmarks}.
 
 \begin{table}[htbp]
 \caption{Simulation Performance across Fluid Fill Levels}
@@ -211,16 +200,26 @@ The engine was implemented in pure embedded C++17 with zero heap usage ($O(1)$ m
 \end{table}
 
 \begin{itemize}
-    \item \textbf{SRAM Footprint}: Total simulation state occupies \textbf{5.95\,KB} (9.3\% of the STM32F401 64\,KB RAM).
-    \item \textbf{Stability}: Over 10,000 steps subjected to 5G acceleration shocks and rapid rotation, zero particles escaped the boundary and no arithmetic NaN errors occurred.
+    \item \textbf{SRAM Footprint}: Complete simulator state occupies \textbf{5.95\,KB} (9.3\% of STM32F401 64\,KB SRAM).
+    \item \textbf{Numerical Robustness}: Over 10,000 steps under 5G acceleration shocks and rapid rotations, zero particles escaped the boundary and no arithmetic NaN conditions occurred.
 \end{itemize}
 
 %% =========================================================================
-%% SECTION IV: BILL OF MATERIALS & PROCUREMENT
+%% SECTION V: PLANNED IMPLEMENTATION & FABRICATION
+%% =========================================================================
+\section{Planned Implementation and Fabrication}
+
+\textbf{Surface-Mount Assembly Strategy.} Drawing from the empirical feedback of the previous year's team, manual hand-soldering of 240 discrete 0603 SMD components using a conventional soldering iron was identified as a critical point of failure due to thermal stress, component misalignment, and high solder-bridge defect rates. To ensure manufacturing repeatability and electrical integrity, the assembly process employs laser-cut stainless steel stencils, lead-free solder paste, and controlled hot-air convective reflow.
+
+\textbf{PCB Architecture.} A custom 2-layer circular PCB ($\varnothing 42$\,mm) is routed in KiCad. The front layer hosts exclusively the 240-LED matrix, while the reverse side accommodates the STM32F401 microcontroller, LSM6DS3 IMU, power regulation circuitry, and 4-pad SWD programming interface. To account for fabrication and assembly yield, five boards are ordered to secure at least two fully operational units.
+
+\textbf{Enclosure and Optical Diffuser.} The enclosure is modeled in Fusion 360 as a two-piece circular case ($\varnothing 45$\,mm outer diameter, 11.5\,mm depth) containing internal snap-fits, a Type-C cutout, and a 30$\times$20$\times$5\,mm battery pocket. Prototypes will be 3D-printed in high-resolution resin. A semi-translucent frosted acrylic diffuser front cover blends discrete LED points into a continuous liquid meniscus.
+
+%% =========================================================================
+%% SECTION VI: BILL OF MATERIALS AND PROCUREMENT
 %% =========================================================================
 \section{Bill of Materials and Procurement}
-
-Table~\ref{tab:bom} lists the key components required for prototyping and the final pendant device.
+Table~\ref{tab:bom} details component specifications and procurement costs.
 
 \begin{table}[htbp]
 \caption{Bill of Materials (BOM)}
@@ -252,28 +251,16 @@ External Programmer    & ST-Link V2 USB Dongle (SWD)        & 1     & \$2.70 \\
 \end{table}
 
 %% =========================================================================
-%% SECTION V: ENCLOSURE DESIGN
+%% SECTION VII: PROJECT ROADMAP
 %% =========================================================================
-\section{Enclosure and Mechanical Design}
-The mechanical enclosure is designed in CAD (Fusion 360) as a two-piece circular puck ($\varnothing 45$\,mm outer diameter, 11.5\,mm depth) accommodating an internal $\varnothing 42$\,mm custom PCB. It consists of:
-\begin{itemize}
-    \item A 3D-printed bottom housing containing the Li-Po battery pocket (30$\times$20$\times$5\,mm), PCB mounting snap-fits, and a cutout for the 6-pin USB Type-C charging port.
-    \item A semi-translucent frosted acrylic diffuser front cover to blend individual LED points into a smooth fluid surface.
-    \item An integrated lanyard loop on top for wearing the pendant on a cord or chain.
-\end{itemize}
-Prototypes will be fabricated using SLA resin 3D printing for fine detail and smooth surface finish.
-
-%% =========================================================================
-%% SECTION VI: DEVELOPMENT ROADMAP
-%% =========================================================================
-\section{Development Roadmap to Defense 2}
-The milestones toward the final working device are scheduled as follows:
-\begin{itemize}
-    \item \textbf{Milestone 1 (Defense 1, Mid-October)}: C++ simulation core verified; Charlieplexing logic validated with NUCLEO-L432KC and breadboard LEDs; BOM and power budget established.
-    \item \textbf{Milestone 2 (End of October)}: Complete KiCad schematic and circular PCB layout with 240 Charlieplexed LEDs ($\varnothing 42$\,mm); order 5x PCB batch with stencil from JLCPCB.
-    \item \textbf{Milestone 3 (November)}: Solder and assemble two circular PCBs using hot-air gun and solder paste; flash firmware via SWD; integrate LSM6DS3 IMU readings with the simulation loop over I2C.
-    \item \textbf{Milestone 4 (Defense 2, Early December)}: Final assembly inside the 3D-printed enclosure; power management tuning; battery endurance testing.
-\end{itemize}
+\section{Project Roadmap to Defense 2}
+The milestones toward the final hardware implementation are structured as follows:
+\begin{enumerate}
+    \item \emph{Milestone 1 (Defense 1, Mid-October):} C++ simulation core verified on desktop; Charlieplexing logic tested on development board; BOM and power budget completed (Completed).
+    \item \emph{Milestone 2 (End of October):} Complete schematic capture and circular PCB layout in KiCad; submit PCB and stencil fabrication orders to JLCPCB.
+    \item \emph{Milestone 3 (November -- Defense 2):} Assemble circular PCBs via solder paste and hot-air reflow; flash firmware via SWD; integrate LSM6DS3 IMU readings with the simulation loop over I2C.
+    \item \emph{Milestone 4 (December -- Final Defense):} Complete enclosure assembly with optical diffuser and battery; conduct thermal, power, and operational validation.
+\end{enumerate}
 
 %% =========================================================================
 %% REFERENCES
