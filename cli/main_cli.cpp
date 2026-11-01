@@ -139,8 +139,8 @@ void run_test_suite() {
 
         int lit_leds = 0;
         test_sim.step(fluid::Vec2(0.0f, 9.8f), dt);
-        for (uint8_t y = 0; y < fluid::Config::GRID_DIM; ++y) {
-            for (uint8_t x = 0; x < fluid::Config::GRID_DIM; ++x) {
+        for (uint8_t y = 0; y < fluid::Config::GRID_ROWS; ++y) {
+            for (uint8_t x = 0; x < fluid::Config::GRID_COLS; ++x) {
                 if (test_sim.is_led(x, y) && test_sim.get_grid_pixel(x, y) > 20) {
                     lit_leds++;
                 }
@@ -268,17 +268,21 @@ void run_benchmark() {
     run_test_suite();
 }
 
-void print_led_matrix(const fluid::FluidSimulator& sim, int frame_idx, const std::string& action, bool auto_rotate, float rotate_speed) {
-    (void)action;
+void print_led_matrix(const fluid::FluidSimulator& sim, int frame_idx, const std::string& action, bool auto_rotate, float rotate_speed, bool mcu_linked = false) {
     (void)auto_rotate;
     (void)rotate_speed;
+    static constexpr uint8_t rowStart[15] = { 3,  2,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  2,  3};
+    static constexpr uint8_t rowEnd[15]   = {12, 13, 14, 15, 15, 15, 15, 15, 15, 15, 15, 15, 14, 13, 12};
+
     // Очищення екрана та повернення курсору у верхній лівий кут
     std::cout << "\033[H\033[J";
 
-    std::cout << "\033[1;36m=== РОЗУМНИЙ КУЛОН: СИМУЛЯЦІЯ ВОДИ (C++ Core) ===\033[0m\n";
-    std::cout << "Світлодіодів: \033[1;33m" << sim.get_led_count() 
-              << "\033[0m | Частинок води: \033[1;32m" << sim.get_particle_count() 
-              << "\033[0m | Кадр: " << frame_idx << "\n\n";
+    std::cout << "\033[1;36m=== РОЗУМНИЙ КУЛОН: ТОЧНА ФІЗИЧНА ПЛАТА 16x15 (216 LED: D04..D237) ===\033[0m\n";
+    std::cout << "Світлодіодів: \033[1;33m" << sim.get_led_count()
+              << "\033[0m | Частинок води: \033[1;32m" << sim.get_particle_count()
+              << "\033[0m | Кадр: " << frame_idx
+              << " | STM32 Sync: " << (mcu_linked ? "\033[1;32mONLINE (/dev/ttyACM0)\033[0m" : "\033[38;5;244mOFFLINE\033[0m") << "\n";
+    std::cout << "Статус: \033[1;35m" << action << "\033[0m\n\n";
 
     std::cout << "\033[1;37mКерування (динаміка хвиль та інерція):\033[0m\n";
     std::cout << "  • Крутнути кулон:          \033[1;33m[R]\033[0m ↺ | \033[1;33m[E]\033[0m ↻ | \033[1;33m[Space]\033[0m авто\n";
@@ -287,12 +291,15 @@ void print_led_matrix(const fluid::FluidSimulator& sim, int frame_idx, const std
     std::cout << "  • Рівень води:             \033[1;33m[1, 2, 3, 4, 5]\033[0m (20%..100%) | \033[1;33m[+ / -]\033[0m частинки\n";
     std::cout << "  • Струс: \033[1;33m[X]\033[0m | Скинути: \033[1;33m[C]\033[0m | Вихід: \033[1;33m[Q]\033[0m\n\n";
 
-    // Відмальовуємо круглу матрицю 18x18 (Рівно 240 світлодіодів)
-    for (uint8_t y = 0; y < fluid::Config::GRID_DIM; ++y) {
-        std::cout << "   ";
-        for (uint8_t x = 0; x < fluid::Config::GRID_DIM; ++x) {
+    // Заголовок колонок X (0..15)
+    std::cout << "       \033[38;5;242m0 1 2 3 4 5 6 7 8 9 A B C D E F\033[0m\n";
+
+    // Відмальовуємо точну фізичну плату 16x15 (216 світлодіодів D04..D237)
+    for (uint8_t y = 0; y < fluid::Config::GRID_ROWS; ++y) {
+        std::cout << "  \033[38;5;244mR" << std::setw(2) << std::setfill('0') << (y + 1) << std::setfill(' ') << "\033[0m  ";
+        for (uint8_t x = 0; x < fluid::Config::GRID_COLS; ++x) {
             if (!sim.is_led(x, y)) {
-                // Поза круглим кулоном
+                // Поза круглим кулоном (зрізані кути D01..D03 тощо)
                 std::cout << "  ";
             } else {
                 uint8_t b = sim.get_grid_pixel(x, y);
@@ -300,21 +307,24 @@ void print_led_matrix(const fluid::FluidSimulator& sim, int frame_idx, const std
                     // Згаслий світлодіод (повітря)
                     std::cout << "\033[38;5;238m· \033[0m";
                 } else if (b < 60) {
-                    // Темно-синій (краї меніска, бризки)
+                    // Темно-синій (краї меніска, бризки -> 12 мкс на STM32)
                     std::cout << "\033[38;5;27m░░\033[0m";
                 } else if (b < 125) {
-                    // Насичений сапфіровий синій (хвилі)
+                    // Насичений сапфіровий синій (хвилі -> 26 мкс на STM32)
                     std::cout << "\033[38;5;33m▒▒\033[0m";
                 } else if (b < 195) {
-                    // Лазурний морський синій (вода)
+                    // Лазурний морський синій (вода -> 45 мкс на STM32)
                     std::cout << "\033[38;5;39m██\033[0m";
                 } else {
-                    // Сяючий електричний ціан (глибина / товща)
+                    // Сяючий електричний ціан (глибина / товща -> 45 мкс на STM32)
                     std::cout << "\033[38;5;81m██\033[0m";
                 }
             }
         }
-        std::cout << "\n";
+        int d_first = y * 16 + rowStart[y] + 1;
+        int d_last  = y * 16 + rowEnd[y] + 1;
+        std::cout << " \033[38;5;242m[D" << std::setw(3) << std::setfill('0') << d_first
+                  << "..D" << std::setw(3) << d_last << std::setfill(' ') << "]\033[0m\n";
     }
     std::cout.flush();
 }
@@ -322,6 +332,24 @@ void print_led_matrix(const fluid::FluidSimulator& sim, int frame_idx, const std
 void run_interactive_demo() {
     fluid::FluidSimulator sim;
     NonBlockingInput input;
+
+    // Автоматичне підключення до STM32 Nucleo-L432KC (/dev/ttyACM0), якщо плата під'єднана по USB
+    int mcu_fd = open("/dev/ttyACM0", O_WRONLY | O_NOCTTY | O_NONBLOCK);
+    if (mcu_fd >= 0) {
+        struct termios tty;
+        if (tcgetattr(mcu_fd, &tty) == 0) {
+            cfsetospeed(&tty, B115200);
+            cfsetispeed(&tty, B115200);
+            cfmakeraw(&tty);
+            tcsetattr(mcu_fd, TCSANOW, &tty);
+        }
+    }
+    auto send_to_mcu = [&](char cmd) {
+        if (mcu_fd >= 0) {
+            ssize_t r = write(mcu_fd, &cmd, 1);
+            (void)r;
+        }
+    };
 
     bool auto_rotate = false;
     float auto_angle = 0.0f;
@@ -338,44 +366,53 @@ void run_interactive_demo() {
             break;
         } else if (act == KEY_ROTATE_TOGGLE) {
             auto_rotate = !auto_rotate;
+            send_to_mcu(' ');
             action = auto_rotate ? "Авто-обертання" : "Вода стікає на дно";
         } else if (act == KEY_SPEED_UP) {
             rotate_speed = std::min(0.35f, rotate_speed + 0.03f);
+            send_to_mcu('f');
             action = "Прискорено обертання (+) [швидкість: " + std::to_string(static_cast<int>(rotate_speed * 500)) + "%]";
         } else if (act == KEY_SPEED_DOWN) {
             rotate_speed = std::max(0.03f, rotate_speed - 0.03f);
+            send_to_mcu('v');
             action = "Сповільнено обертання (-) [швидкість: " + std::to_string(static_cast<int>(rotate_speed * 500)) + "%]";
         } else if (act == KEY_SPIN_CW) {
             auto_rotate = false;
             sim.add_rotational_impulse(6.0f);
+            send_to_mcu('e');
             action = "Крутнули кулон ↻↻ (потужний вихор і хвилі!)";
         } else if (act == KEY_SPIN_CCW) {
             auto_rotate = false;
             sim.add_rotational_impulse(-6.0f);
+            send_to_mcu('r');
             action = "Крутнули кулон ↺↺ (потужний вихор і хвилі!)";
         } else if (act == KEY_LEFT) {
             auto_rotate = false;
             // Потужна хвиля вліво (підіймається вгору по дузі кулона)
             sim.add_impulse(fluid::Vec2(-4.2f, -1.0f));
             dynamic_acc.x -= 32.0f;
+            send_to_mcu('a');
             action = "Поштовх ВЛІВО ◄◄ (хвиля накочується й коливається!)";
         } else if (act == KEY_RIGHT) {
             auto_rotate = false;
             // Потужна хвиля вправо (підіймається вгору по дузі кулона)
             sim.add_impulse(fluid::Vec2(4.2f, -1.0f));
             dynamic_acc.x += 32.0f;
+            send_to_mcu('d');
             action = "Поштовх ВПРАВО ►► (хвиля накочується й коливається!)";
         } else if (act == KEY_UP) {
             auto_rotate = false;
             // Сплеск / стрибок вгору
             sim.add_impulse(fluid::Vec2(0.0f, -5.5f));
             dynamic_acc.y -= 35.0f;
+            send_to_mcu('w');
             action = "Стрибок / Сплеск вгору ▲▲ (вода падає на дно)";
         } else if (act == KEY_DOWN) {
             auto_rotate = false;
             // Присідання / осідання
             sim.add_impulse(fluid::Vec2(0.0f, 4.0f));
             dynamic_acc.y += 24.0f;
+            send_to_mcu('s');
             action = "Різке осідання на дно ▼";
         } else if (act == KEY_SHAKE) {
             auto_rotate = false;
@@ -384,30 +421,39 @@ void run_interactive_demo() {
             sim.add_impulse(fluid::Vec2(rx, ry));
             dynamic_acc.x += rx * 10.0f;
             dynamic_acc.y += ry * 10.0f;
+            send_to_mcu('x');
             action = "Струс кулона ⚡";
         } else if (act == KEY_ADD_PARTICLES) {
             sim.adjust_particle_count(8);
+            send_to_mcu('+');
         } else if (act == KEY_SUB_PARTICLES) {
             sim.adjust_particle_count(-8);
+            send_to_mcu('-');
         } else if (act == KEY_LEVEL_1) {
             sim.set_fill_level(0.20f);
+            send_to_mcu('1');
             action = "Рівень 1: ~15% води (8 частинок)";
         } else if (act == KEY_LEVEL_2) {
             sim.set_fill_level(0.40f);
+            send_to_mcu('2');
             action = "Рівень 2: ~30% води (18 частинок)";
         } else if (act == KEY_LEVEL_3) {
             sim.set_fill_level(0.60f);
+            send_to_mcu('3');
             action = "Рівень 3: ~50% води (28 частинок)";
         } else if (act == KEY_LEVEL_4) {
             sim.set_fill_level(0.80f);
+            send_to_mcu('4');
             action = "Рівень 4: ~65% води (40 частинок)";
         } else if (act == KEY_LEVEL_5) {
             sim.set_fill_level(1.00f);
+            send_to_mcu('5');
             action = "Рівень 5: ~80% води (52 частинки)";
         } else if (act == KEY_RESET) {
             auto_rotate = false;
             dynamic_acc = fluid::Vec2(0.0f, 0.0f);
             sim.reset();
+            send_to_mcu('c');
             action = "Скидання стану (вода на дні)";
         }
 
@@ -430,11 +476,14 @@ void run_interactive_demo() {
         }
 
         sim.step(total_g, 0.025f, current_omega);
-        print_led_matrix(sim, frame++, action, auto_rotate, rotate_speed);
+        print_led_matrix(sim, frame++, action, auto_rotate, rotate_speed, mcu_fd >= 0);
 
         std::this_thread::sleep_for(std::chrono::milliseconds(25)); // ~40 FPS
     }
 
+    if (mcu_fd >= 0) {
+        close(mcu_fd);
+    }
     std::cout << "\033[?25h\033[0m\n"; // Відновлюємо курсор
 }
 

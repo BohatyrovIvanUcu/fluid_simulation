@@ -15,16 +15,17 @@ FluidSimulator::FluidSimulator()
 
 void FluidSimulator::init_led_layout() {
     led_count_ = 0;
-    const float half_dim = (Config::GRID_DIM - 1.0f) * 0.5f;
-    const float divisor = 8.65f; // Дає РІВНО 240 симетричних світлодіодів
 
-    for (uint8_t y = 0; y < Config::GRID_DIM; ++y) {
-        for (uint8_t x = 0; x < Config::GRID_DIM; ++x) {
-            float nx = (static_cast<float>(x) - half_dim) / divisor;
-            float ny = (static_cast<float>(y) - half_dim) / divisor;
+    // Точні межі фізично присутніх світлодіодів на реальній круглій платі 16x15 (216 LED: D04..D237)
+    static constexpr uint8_t rowStart[Config::GRID_ROWS] = { 3,  2,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  2,  3};
+    static constexpr uint8_t rowEnd[Config::GRID_ROWS]   = {12, 13, 14, 15, 15, 15, 15, 15, 15, 15, 15, 15, 14, 13, 12};
 
-            // Перевіряємо коло кулона
-            if ((nx * nx + ny * ny) <= 1.0f) {
+    for (uint8_t y = 0; y < Config::GRID_ROWS; ++y) {
+        for (uint8_t x = 0; x < Config::GRID_COLS; ++x) {
+            if (x >= rowStart[y] && x <= rowEnd[y]) {
+                float nx = (static_cast<float>(x) - 7.5f) / 8.5f;
+                float ny = (static_cast<float>(y) - 7.0f) / 8.2f;
+
                 is_led_mask_[y][x] = true;
                 if (led_count_ < Config::TOTAL_LEDS) {
                     leds_[led_count_].pos = Vec2(nx, ny);
@@ -64,9 +65,11 @@ void FluidSimulator::set_fill_level(float ratio) {
     else target_count = 52;
 
     const float spacing = 0.135f;
-    for (float y = 0.95f; y >= -0.95f && particle_count_ < target_count; y -= spacing) {
-        for (float x = -0.95f; x <= 0.95f && particle_count_ < target_count; x += spacing) {
-            if (x * x + y * y <= 0.95f) {
+    for (float y = 0.92f; y >= -0.92f && particle_count_ < target_count; y -= spacing) {
+        for (int k = 0; k <= 14 && particle_count_ < target_count; ++k) {
+            // Симетричне заповнення від центру (0, -s, +s, -2s, +2s...)
+            float x = (k == 0) ? 0.0f : ((k & 1) ? -((k + 1) / 2) * spacing : (k / 2) * spacing);
+            if (x * x + y * y <= 0.92f) {
                 particles_[particle_count_].pos = Vec2(x, y);
                 particles_[particle_count_].vel = Vec2(0.0f, 0.0f);
                 ++particle_count_;
@@ -74,10 +77,12 @@ void FluidSimulator::set_fill_level(float ratio) {
         }
     }
 
-    // Швидке розправлення поверхні рідини для точного стартового відліку діодів
-    for (int i = 0; i < 6; ++i) {
-        resolve_particle_collisions();
-        apply_boundary_constraints();
+    // Природне осідання рідини під дією гравітації для ідеально рівної та симетричної поверхні
+    for (int i = 0; i < 20; ++i) {
+        step(Vec2(0.0f, 9.8f), 0.025f);
+    }
+    for (uint16_t i = 0; i < particle_count_; ++i) {
+        particles_[i].vel = Vec2(0.0f, 0.0f);
     }
 
     render_to_leds();
@@ -259,7 +264,7 @@ void FluidSimulator::render_to_leds() {
 
         uint8_t gx = leds_[k].grid_x;
         uint8_t gy = leds_[k].grid_y;
-        if (gx < Config::GRID_DIM && gy < Config::GRID_DIM) {
+        if (gx < Config::GRID_COLS && gy < Config::GRID_ROWS) {
             grid_[gy][gx] = brightness;
         }
     }

@@ -57,17 +57,17 @@ public:
     const LedPixel* get_leds() const { return leds_; }
     uint16_t get_led_count() const { return led_count_; }
 
-    // Перевірка, чи є точка (x, y) фізичним світлодіодом кулона
+    // Перевірка, чи є точка (x, y) фізичним світлодіодом кулона (16x15, 216 LED)
     bool is_led(uint8_t x, uint8_t y) const {
-        if (x < Config::GRID_DIM && y < Config::GRID_DIM) {
+        if (x < Config::GRID_COLS && y < Config::GRID_ROWS) {
             return is_led_mask_[y][x];
         }
         return false;
     }
 
-    // Отримання віртуальної 2D сітки [18][18] (0 = порожньо, 255 = максимальна яскравість)
+    // Отримання віртуальної 2D сітки [15][16] (0 = порожньо, 255 = максимальна яскравість)
     uint8_t get_grid_pixel(uint8_t x, uint8_t y) const {
-        if (x < Config::GRID_DIM && y < Config::GRID_DIM) {
+        if (x < Config::GRID_COLS && y < Config::GRID_ROWS) {
             return grid_[y][x];
         }
         return 0;
@@ -84,8 +84,8 @@ private:
     LedPixel leds_[Config::TOTAL_LEDS];
     uint16_t led_count_;
 
-    uint8_t grid_[Config::GRID_DIM][Config::GRID_DIM];
-    bool is_led_mask_[Config::GRID_DIM][Config::GRID_DIM];
+    uint8_t grid_[Config::GRID_ROWS][Config::GRID_COLS];
+    bool is_led_mask_[Config::GRID_ROWS][Config::GRID_COLS];
 };
 
 } // namespace fluid

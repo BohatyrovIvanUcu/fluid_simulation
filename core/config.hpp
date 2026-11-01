@@ -24,11 +24,13 @@ struct Config {
     // Сила розслаблення тиску (0.92f забезпечує пласку горизонтальну поверхню води)
     static constexpr float REPULSION_STRENGTH = 0.92f;
 
-    // Розмірність квадратної сітки для матриці (18x18 з круговою маскою дає ~240 активних LED)
-    static constexpr uint8_t GRID_DIM = 18;
+    // Розмірність фізичної матриці кулона (16 стовпчиків x 15 рядків, 216 фізичних LED із 240 логічних)
+    static constexpr uint8_t GRID_COLS = 16;
+    static constexpr uint8_t GRID_ROWS = 15;
+    static constexpr uint8_t GRID_DIM = 16;
 
-    // Загальна кількість світлодіодів кулона
-    static constexpr uint16_t TOTAL_LEDS = 240;
+    // Загальна кількість фізичних світлодіодів на круглій платі (36 + 144 + 36 = 216 LED: D04..D237)
+    static constexpr uint16_t TOTAL_LEDS = 216;
 };
 
 } // namespace fluid
