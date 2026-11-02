@@ -256,9 +256,9 @@ Subjective Fidelity         & Heavy, viscous sloshing    & \textbf{Natural minia
 %% =========================================================================
 \section{Planned Implementation and Fabrication}
 
-\textbf{Surface-Mount Assembly Strategy.} Drawing from the empirical feedback of the previous year's team, manual hand-soldering of 240 discrete 0603 SMD components using a conventional soldering iron was identified as a critical point of failure due to thermal stress, component misalignment, and high solder-bridge defect rates. To ensure manufacturing repeatability and electrical integrity, the assembly process employs laser-cut stainless steel stencils, lead-free solder paste, and controlled hot-air convective reflow.
+\textbf{Surface-Mount Assembly Strategy.} Drawing from the empirical feedback of the previous year's team, manual hand-soldering of 216 discrete 0603 SMD LEDs and sub-millimeter fine-pitch ICs (UFQFPN48 MCU and LGA-14 IMU) using a conventional soldering iron was identified as a critical point of failure due to thermal stress, component misalignment, and high solder-bridge defect rates. To ensure manufacturing repeatability and electrical integrity, the assembly process employs factory double-sided automated surface-mount assembly (JLCPCB PCBA). Pick-and-place robotics mount the 216 LEDs on the front layer and all integrated circuits and passive filtering on the reverse side. The student team performs manual soldering strictly on non-critical mechanical interfaces: the two leads of the Li-Po battery and the slide power switch.
 
-\textbf{PCB Architecture.} A custom 2-layer circular PCB ($\varnothing 42$\,mm) is routed in KiCad. The front layer hosts exclusively the 240-LED matrix, while the reverse side accommodates the STM32F401 microcontroller, LSM6DS3 IMU, power regulation circuitry, and 4-pad SWD programming interface. To account for fabrication and assembly yield, five boards are ordered to secure at least two fully operational units.
+\textbf{PCB Architecture.} A custom 2-layer circular PCB ($\varnothing 42$\,mm) is routed in KiCad. The front layer hosts exclusively the 216-LED circular matrix, while the reverse side accommodates the STM32F401 microcontroller, LSM6DS3 IMU, power regulation circuitry, USB Type-C power connector, and a 4-pad flat SWD programming interface (3.3V, SWDIO, SWCLK, GND). Firmware is flashed and debugged in STM32CubeIDE via an external ST-Link V2 dongle. Running from the internal 16\,MHz HSI oscillator (with PLL multiplying to 84\,MHz) obviates the need for external crystal resonators, preserving board area. To account for fabrication and assembly yield, five assembled boards are ordered to secure at least two fully operational units.
 
 \textbf{Enclosure and Optical Diffuser.} The enclosure is modeled in Fusion 360 as a two-piece circular case ($\varnothing 45$\,mm outer diameter, 11.5\,mm depth) containing internal snap-fits, a Type-C cutout, and a 30$\times$20$\times$5\,mm battery pocket. Prototypes will be 3D-printed. A semi-translucent frosted acrylic diffuser front cover blends discrete LED points into a continuous liquid meniscus.
 
@@ -266,32 +266,34 @@ Subjective Fidelity         & Heavy, viscous sloshing    & \textbf{Natural minia
 %% SECTION VI: BILL OF MATERIALS AND PROCUREMENT
 %% =========================================================================
 \section{Bill of Materials and Procurement}
-Table~\ref{tab:bom} details component specifications and procurement costs.
+Table~\ref{tab:bom} details the finalized component specifications and procurement costs for custom PCB fabrication.
 
 \begin{table}[htbp]
-\caption{Bill of Materials (BOM)}
+\caption{Finalized Bill of Materials (BOM) for Custom PCB Fabrication}
 \label{tab:bom}
 \centering
 \resizebox{\columnwidth}{!}{%
-\begin{tabular}{llcc}
+\begin{tabular}{llccc}
 \toprule
-\textbf{Component} & \textbf{Model / Spec} & \textbf{Qty} & \textbf{Unit Cost} \\
+\textbf{Component} & \textbf{Model / Spec} & \textbf{Qty} & \textbf{Assembly} & \textbf{Unit Cost} \\
 \midrule
-Lab Dev Board          & NUCLEO-L432KC / BlackPill          & 1     & \$0.00 (Supplied) \\
-Standalone MCU         & STM32F401CCU6 (UFQFPN48)           & 1     & \$3.40 \\
-IMU Sensor             & LSM6DS3TR-C (6-axis, ultra-LP)     & 1     & \$2.20 \\
-Matrix LEDs            & SMD 0603 Blue High-Brightness      & 500   & \$3.00 \\
-Current-Limit Resistors& SMD 0603 (16 lines + spares)       & 20    & \$0.50 \\
-Decoupling Capacitors  & SMD 0603 (100nF, 1uF, 10uF)        & 1 kit & \$0.75 \\
-USB Type-C Connector   & 6-pin SMD Receptacle (Power)       & 2     & \$0.60 \\
-Battery Charger IC     & TP4056 with Protection (DW01A)     & 1     & \$0.40 \\
-LDO Voltage Regulator  & XC6206P332MR (3.3V, 250mA)         & 2     & \$0.40 \\
-Li-Po Battery          & 3.7\,V 300\,mAh (Model 502030)     & 1     & \$2.70 \\
-Custom Circular PCB    & 2-layer $\varnothing 42$\,mm (JLCPCB) & 5  & \$8.50 \\
-SMD Solder Stencil     & Stainless steel frameless stencil  & 1     & \$3.00 \\
-External Programmer    & ST-Link V2 USB Dongle (SWD)        & 1     & \$2.70 \\
+Lab Dev Board          & NUCLEO-L432KC / BlackPill          & 1     & Benchtop & \$0.00 (Supplied) \\
+Standalone MCU         & STM32F401CCU6 (UFQFPN48)           & 1     & PCBA     & \$3.40 \\
+IMU Sensor             & LSM6DS3TR-C (6-axis, LGA-14)       & 1     & PCBA     & \$2.20 \\
+Matrix LEDs            & SMD 0603 Blue High-Brightness      & 216   & PCBA     & \$2.16 \\
+Current-Limit Resistors& SMD 0603 (33--47\,$\Omega$, 1\%)   & 16    & PCBA     & \$0.16 \\
+USB Type-C Connector   & 16-pin SMD Receptacle (Power + CC) & 1     & PCBA     & \$0.35 \\
+CC Pull-Down Resistors & SMD 0603 (5.1\,k$\Omega$, 1\%)      & 2     & PCBA     & \$0.02 \\
+Battery Charger IC     & TP4056 Linear ($R_{\text{PROG}}=6.2\,\text{k}\Omega$) & 1 & PCBA & \$0.30 \\
+LDO Voltage Regulator  & ME6211C33M5G (3.3V, 500mA, SOT-23) & 1     & PCBA     & \$0.25 \\
+Passive Filter Array   & 100nF, 10$\mu$F, 4.7k$\Omega$, 10k$\Omega$ & 14 & PCBA & \$0.35 \\
+Charge Status LEDs     & SMD 0603 Red / Green + Resistors   & 2     & PCBA     & \$0.10 \\
+Power Slide Switch     & Subminiature SPDT SMD (MSK-12C02)  & 1     & Manual   & \$0.30 \\
+Li-Po Battery          & 3.7\,V 300\,mAh (Model 502030)     & 1     & Manual   & \$2.70 \\
+Custom Circular PCB    & 2-layer $\varnothing 42$\,mm + Double SMT & 5 & JLCPCB & \$11.50 \\
+External Programmer    & ST-Link V2 USB Dongle (SWD)        & 1     & Lab Tool & \$0.00 (Supplied) \\
 \midrule
-\textbf{Total Prototype Cost} & & & \textbf{$\approx \$28.15$} \\
+\textbf{Total Prototype Cost} & & & & \textbf{$\approx \$23.79$} \\
 \bottomrule
 \end{tabular}%
 }

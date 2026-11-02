@@ -131,3 +131,41 @@ inline void getLedPins(int x, int y, int &anodePin, int &cathodePin) {
 }
 ```
 
+---
+
+## 5. Фінальна апаратна розпіновка власної плати кулона (Custom PCB v1.0)
+
+На власній круглій друкованій платі ($\varnothing 42$\,мм) на базі чіпа **STM32F401CCU6 (UFQFPN-48)** ліквідовано всі апаратні колізії стенду Nucleo (перемички SB16/SB18 та підтяжки I2C).
+
+### 5.1. Повна карта розподілу виводів чіпа STM32F401CCU6
+
+| Підсистема | Пін STM32 | Фізична функція | Зовнішнє підключення / Обв'язка |
+| :--- | :---: | :--- | :--- |
+| **I2C IMU** | `PB6` | I2C1_SCL | Тільки сенсор LSM6DS3TR-C (підтяжка 4.7 кОм до +3.3V) |
+| **I2C IMU** | `PB7` | I2C1_SDA | Тільки сенсор LSM6DS3TR-C (підтяжка 4.7 кОм до +3.3V) |
+| **SWD Debug** | `PA13` | SWDIO | Плоска тестова площадка `TP_SWDIO` (1.5 мм на B.Cu) |
+| **SWD Debug** | `PA14` | SWCLK | Плоска тестова площадка `TP_SWCLK` (1.5 мм на B.Cu) |
+| **Boot Mode** | `BOOT0`| BOOT0 | Резистор 10 кОм на GND (штатний запуск з Flash) |
+| **Reset** | `NRST` | System Reset | Тестова площадка / конденсатор 100 нФ до GND |
+| **Matrix L[0]** | `PB3` | GPIO_Output / Hi-Z | Лінія 0 Charlieplexing (через резистор 33--47 $\Omega$) |
+| **Matrix L[1]** | `PA4` | GPIO_Output / Hi-Z | Лінія 1 Charlieplexing (через резистор 33--47 $\Omega$) |
+| **Matrix L[2]** | `PA6` | GPIO_Output / Hi-Z | Лінія 2 Charlieplexing (**чистий GPIO, ізольований від I2C!**) |
+| **Matrix L[3]** | `PA8` | GPIO_Output / Hi-Z | Лінія 3 Charlieplexing (через резистор 33--47 $\Omega$) |
+| **Matrix L[4]** | `PA10`| GPIO_Output / Hi-Z | Лінія 4 Charlieplexing (через резистор 33--47 $\Omega$) |
+| **Matrix L[5]** | `PB5` | GPIO_Output / Hi-Z | Лінія 5 Charlieplexing (через резистор 33--47 $\Omega$) |
+| **Matrix L[6]** | `PB0` | GPIO_Output / Hi-Z | Лінія 6 Charlieplexing (через резистор 33--47 $\Omega$) |
+| **Matrix L[7]** | `PB1` | GPIO_Output / Hi-Z | Лінія 7 Charlieplexing (через резистор 33--47 $\Omega$) |
+| **Matrix L[8]** | `PB4` | GPIO_Output / Hi-Z | Лінія 8 Charlieplexing (через резистор 33--47 $\Omega$) |
+| **Matrix L[9]** | `PA11`| GPIO_Output / Hi-Z | Лінія 9 Charlieplexing (через резистор 33--47 $\Omega$) |
+| **Matrix L[10]**| `PA9` | GPIO_Output / Hi-Z | Лінія 10 Charlieplexing (через резистор 33--47 $\Omega$) |
+| **Matrix L[11]**| `PA7` | GPIO_Output / Hi-Z | Лінія 11 Charlieplexing (через резистор 33--47 $\Omega$) |
+| **Matrix L[12]**| `PA5` | GPIO_Output / Hi-Z | Лінія 12 Charlieplexing (**чистий GPIO, ізольований від I2C!**) |
+| **Matrix L[13]**| `PA3` | GPIO_Output / Hi-Z | Лінія 13 Charlieplexing (через резистор 33--47 $\Omega$) |
+| **Matrix L[14]**| `PA1` | GPIO_Output / Hi-Z | Лінія 14 Charlieplexing (через резистор 33--47 $\Omega$) |
+| **Matrix L[15]**| `PA0` | GPIO_Output / Hi-Z | Лінія 15 Charlieplexing (через резистор 33--47 $\Omega$) |
+
+### 5.2. Висновки щодо спрощення прошивки
+1. **Видалення хаків сканування:** завдяки повній фізичній ізоляції `PB6/PB7` від `PA6/PA5` зникає потреба в штучному заниженні SCL під час перемикання діодів. Діоди `D81/D82` більше не спричиняють хибних сигналів `I2C START`.
+2. **Нульовий джиттер:** матриця розгортається безпосередньо з апаратного таймера (наприклад, TIM2/TIM3) через прямий запис у регістри `BSRR` та `MODER` портів GPIOA/GPIOB, забезпечуючи стабільну частоту оновлення $>800$\,Hz.
+
+
